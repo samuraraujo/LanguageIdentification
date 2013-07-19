@@ -1,0 +1,12 @@
+log_de_Book 0.85
+log_de_Film 0.75
+log_en_Book 0.99
+log_en_Film 0.93
+log_es_Book 0.91
+log_es_Film 0.52
+log_fr_Book 0.90
+log_fr_Film 0.70
+log_pt_Book 0.43
+log_pt_Film 0.11
+log_ru_Book 0.97
+log_ru_Film 0.99

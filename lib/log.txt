@@ -1,0 +1,49 @@
+ def language_pair(_class, tag_a, tag_b)
+      total = Query.new.adapters(@endpoint).sparql("SELECT distinct count(distinct ?s) WHERE {?s ?p <#{_class}> . ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .").execute.flatten.first.to_i
+      results = Query.new.adapters(@endpoint).sparql("SELECT distinct ?o ?x WHERE {?s ?p <#{_class}> . ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .filter (lang(?o) = '#{tag_a}') ?s <http://www.w3.org/2000/01/rdf-schema#label> ?x .filter (lang(?x) = '#{tag_b}')}").execute
+      puts "RESULTS FOR #{_class} #{tag_a} #{tag_b}: Resources #{total}"
+      different =[]
+      all = []
+      results.each{|x|
+        lang_a = x[0].gsub(/[()].+[()]/,"").rstrip.downcase
+        lang_b = x[1].gsub(/[()].+[()]/,"").rstrip.downcase
+
+        dtag_a=detect(lang_a)
+        dtag_a = tag_a if dtag_a=="NN"
+        dtag_b=detect(lang_b)
+        dtag_b = tag_b if dtag_b=="NN"
+
+        # puts "#{lang_a}<=>#{dtag_a}<=>#{tag_a}<=>#{lang_b}<=>#{dtag_b}<=>#{tag_b}<=>#{lang_a == lang_b}"
+        all << [lang_a, dtag_a, tag_a, lang_b, dtag_b, tag_b, lang_a == lang_b]
+
+        if lang_a != lang_b
+          different << [lang_a, dtag_a, tag_a, lang_b, dtag_b, tag_b, lang_a == lang_b]
+        end
+      }
+      printf "NOT TRANSLATED: %d %.2f%\n" , different.size, 100 * ( different.size) /total
+
+      r1 = all.map{|la,da,ta,lb,db,tb,e| da if da==ta  }.compact.size
+      printf "CORRECT SOURCE LANG TAG: %d %.2f%\n",   r1, 100 * ( r1) / total
+
+      r1 = all.map{|la,da,ta,lb,db,tb,e| db if db==tb  }.compact.size
+      printf "CORRECT TARGET LANG TAG: %d %.2f%\n",   r1, 100 * (  r1) / total
+
+      r1 = different.map{|la,da,ta,lb,db,tb,e| da if da==ta  }.compact.size
+      printf "CORRECT SOURCE LANG TAG (WITH SOURCE TEXT DIFFERENT FROM TARGET): %d %.2f%\n",   r1, 100 * (  r1) / different.size.to_f
+
+      r1 = different.map{|la,da,ta,lb,db,tb,e| db if db==tb  }.compact.size
+      printf "CORRECT TARGET LANG TAG (WITH SOURCE TEXT DIFFERENT FROM TARGET): %d %.2f%\n",   r1, 100 * (  r1) / different.size.to_f
+
+    end
+
+    def mount_adapter(endpoint, method=:post,cache=true)
+      adapter=nil
+      begin
+        adapter = ConnectionPool.add_data_source :type => :sparql, :engine => :virtuoso, :title=> endpoint , :url =>  endpoint, :results => :sparql_xml, :caching => cache , :request_method => method
+      rescue Exception => e
+        puts e.getMessage()
+        return nil
+      end
+      return adapter
+    end
+  end
