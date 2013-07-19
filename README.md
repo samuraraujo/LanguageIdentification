@@ -26,6 +26,10 @@ Edit the the file ./lib/dbpedia_langtag_verification.rb, and then run:
 	ruby ./lib/dbpedia_langtag_verification.rb
 
 
+Fell free to use and distribute the code and ground truth.
+
+@Samur Araujo
+NO LICENSE REQUIRED (NLR)
 
 
 
